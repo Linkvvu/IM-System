@@ -13,11 +13,12 @@ import (
 )
 
 type View struct {
-	choice uint8
+	choice  uint8
+	curUser *client
 }
 
-func NewView() *View {
-	view := &View{255}
+func NewView(curUser *client) *View {
+	view := &View{255, curUser}
 	return view
 }
 
@@ -46,11 +47,11 @@ func (this *View) run() {
 		}
 		switch this.choice {
 		case 1:
-			fmt.Println("私聊模式")
+			this.curUser.privateChat()
 		case 2:
-			fmt.Println("群聊模式")
+			this.curUser.publicChar()
 		case 3:
-			fmt.Println("修改名称")
+			this.curUser.ModifyUserName()
 		}
 		C.clear()
 	}

@@ -57,6 +57,7 @@ func (this *User) Offline() {
 	this.Server.BroadCast(this, "已下线")
 }
 
+// 将服务器的Reply发生给客户端
 func (this *User) SendMesToCli(msg string) {
 	this.conn.Write([]byte(msg + "\r\n"))
 }

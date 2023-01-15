@@ -59,16 +59,20 @@ func (this *Server) Handler(cli_conn net.Conn) {
 		for {
 			buf := make([]byte, 4096)
 			n, err := cur_User.conn.Read(buf)
-			if n == 0 {
+			// 如果n==0，则err为: use of closed network connection 或 An existing connection was forcibly closed by the remote host
+			// 前者表示本端Close()当前Read的连接，后者表示对端强制关闭conn
+			// log.Println(err)
+			if n == 0 { // err: use of closed network connection 或 An existing connection was forcibly closed by the remote host
 				cur_User.Offline()
 				return
 			}
 
-			if err != nil && err != io.EOF {
-				log.Fatal(err)
+			if err != nil && err != io.EOF { // 感知到对端正常关闭(调用Close方法)了tcp连接
+				log.Printf("IP:[%s]关闭了TCP连接", cur_User.Addr)
+				cur_User.conn.Close() // 本端也tcp关闭连接，避免sock文件描述符发生泄漏
 			}
 
-			/*由于没有写客户端 暂时这样判断,防止客户端只发送\r\n*/
+			/* 防止客户端只发送\r\n */
 			if n < 3 {
 				continue
 			}
@@ -83,7 +87,7 @@ func (this *Server) Handler(cli_conn net.Conn) {
 	for {
 		select {
 		case <-isActive:
-		case <-time.After(time.Minute * 3):
+		case <-time.After(time.Minute * 5):
 			cur_User.SendMesToCli("过久未响应，已与服务器断开连接！")
 			cur_User.Offline()
 			runtime.Goexit() // 退出当前协程
